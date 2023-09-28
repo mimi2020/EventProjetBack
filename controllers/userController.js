@@ -341,45 +341,39 @@ module.exports = {
 
     Login: async function (request, result) {
 
+        var email = request.body.email; //??
+        var password = request.body.password;//??
 
-        try {
-            const { email, password } = request.body;
-            const user = await UserModel.findOne({ email })
-            const passwordValid = await argon2.verify(user.password, password)
+        // try {
+        //  const { email, password } = request.body; //??
+        const user = await UserModel.findOne({ email })
+        if (user) {
 
+            const passwordValid = await argon2.verify(user.password, password);
             if (!passwordValid) {
-                return (result.status(400).json({
-
-                    status: 400, massage: "ivalid pasword"
-
-                })
-
-                );
+                return (result.status(400).json({ status: 400, massage: "ivalid pasword" }));
             }
 
-            const token = jwt.sign({ id: user._id, user: user }, SECRET, { expiresIn: "7 days" });
-            console.log("token is ", token)
+            const token = jwt.sign({ id: user._id, user: user }, "pfe", { expiresIn: "7 days" });
+            console.log("token is ", token);
 
             const data = { user: user, token: token, expiresIn: 7 };
 
-
-
-            return result.cookie("access_token", token, { maxAge: 3600 * 1000, httpOnly: true, sameSite: true })
-
-                .status(200).json({
-
-                    status: 200, message: data
-                })
-
-
-
-        } catch (error) {
-
-            result.status(400).json({ status: 400, message: "user with this email is not found" })
+            if (token != null) {
+                return await result.status(200).json({ status: 200, message: data })
+            }
 
         }
 
+        else {
+            return result.json({ status: 400, message: "user not found" })
+        }
+
+
+        
+
     },
+
 
 
     changePassword: async function (request, result) {
